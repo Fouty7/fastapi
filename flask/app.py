@@ -1,3 +1,4 @@
+from turtle import title
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
@@ -7,12 +8,23 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app) 
 
-@app.get("/")
-def home():
-    return "Hello, World"
-
 #Database Model
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
-    status = db.Column(db.Boolean) 
+    status = db.Column(db.Boolean)
+
+db.create_all()    
+    
+@app.get("/")
+def home():
+    todo_list = db.session.query(Todo).all()
+    return render_template("base.html", todo_list=todo_list)
+
+@app.post("/add")
+def add():
+    title = request.form.get("title")
+    new_todo = Todo(title=title, status=False)
+    db.session.add(new_todo)
+    db.session.commit()
+    return redirect(url_for("home"))
